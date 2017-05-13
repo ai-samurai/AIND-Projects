@@ -35,7 +35,17 @@ def custom_score(game, player):
         The heuristic value of the current game state to the specified player.
     """
     # TODO: finish this function!
-    raise NotImplementedError
+    if game.is_loser(player):
+        return float("-inf")
+
+    if game.is_winner(player):
+        return float("inf")
+
+    own_moves = len(game.get_legal_moves(player))
+    opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
+    return float(own_moves - opp_moves)
+
+    #raise NotImplementedError
 
 
 def custom_score_2(game, player):
@@ -213,7 +223,89 @@ class MinimaxPlayer(IsolationPlayer):
             raise SearchTimeout()
 
         # TODO: finish this function!
-        raise NotImplementedError
+        player = game.active_player
+        opponent = game.inactive_player
+        legal_moves = game.get_legal_moves(player)
+        if not legal_moves:
+            return (-1, -1)
+        best_move = legal_moves[0]
+        best_score = float('-inf')
+        for move in legal_moves:
+            clone = game.forecast_move(move)
+            score = self.min_value(clone, player, opponent, depth-1)
+            if score > best_score:
+                best_score=score
+                best_move=move
+
+        return best_move
+        #raise NotImplementedError
+
+    def min_value(self, game, player, opponent, depth):
+        """Implement minimum value node from the minimax algorithm
+
+        Parameters
+        ----------
+        game : isolation.Board
+            An instance of the Isolation game `Board` class representing the
+            passed on game state
+
+        depth : int
+            Depth is an integer representing the maximum number of plies to
+            search in the game tree before aborting
+
+        Returns
+        -------
+        best_score: float
+            Returns the best score from set of scores of available moves
+
+        """
+        if self.time_left() < self.TIMER_THRESHOLD:
+            raise SearchTimeout()
+        if game.utility(player):
+            return game.utility(player)
+        if depth<1:
+            return self.score(game, player)
+        best_score=float('inf')
+
+        moves=game.get_legal_moves(opponent)
+        for move in moves:
+            clone=game.forecast_move(move)
+            score=self.max_value(clone, player, opponent, depth-1)
+            if score<best_score:
+                best_move=move
+                best_score=score
+        return best_score
+
+    def max_value(self, game, player, opponent, depth):
+        """Implement maximum value node from the minimax algorithm
+
+        Parameters
+        ----------
+        game : isolation.Board
+            An instance of the Isolation game `Board` class representing the
+            passed on game state
+
+        Returns
+        -------
+        best_score: float
+            Returns the best score from set of scores of available moves
+
+        """
+        if self.time_left() < self.TIMER_THRESHOLD:
+            raise SearchTimeout()
+        if game.utility(player):
+            return game.utility(player)
+        if depth<1:
+            return self.score(game, player)
+        best_score=float('-inf')
+        moves=game.get_legal_moves(player)
+        for move in moves:
+            clone=game.forecast_move(move)
+            score=self.min_value(clone, player, opponent, depth-1)
+            if score>best_score:
+                best_move=move
+                best_score=score
+        return best_score
 
 
 class AlphaBetaPlayer(IsolationPlayer):
