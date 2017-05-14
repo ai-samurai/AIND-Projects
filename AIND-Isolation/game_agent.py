@@ -216,9 +216,6 @@ class MinimaxPlayer(IsolationPlayer):
             raise SearchTimeout()
 
         # TODO: finish this function!
-        #player = game.active_player
-        #opponent = game.inactive_player
-        #legal_moves = game.get_legal_moves(player)
         legal_moves = game.get_legal_moves()
         if not legal_moves:
             return (-1, -1)
@@ -232,7 +229,6 @@ class MinimaxPlayer(IsolationPlayer):
                 best_move=move
 
         return best_move
-        #raise NotImplementedError
 
     #def min_value(self, game, player, opponent, depth):
     def min_value(self, game, depth):
@@ -243,12 +239,6 @@ class MinimaxPlayer(IsolationPlayer):
         game : isolation.Board
             An instance of the Isolation game `Board` class representing the
             passed on game state
-
-        player : Board.active_player
-            The CPU player that is running the alpha-beta search to find the best move
-            
-        opponent : Board.inactive_player
-            Opponent trying to defeat our CPU player
         
         depth : int
             Depth is an integer representing the maximum number of plies to
@@ -264,16 +254,14 @@ class MinimaxPlayer(IsolationPlayer):
             raise SearchTimeout()
         if depth < 1 or len(game.get_legal_moves()) < 1:
             return self.score(game, self)
-        best_score=float('inf')
-
+        min_score=float('inf')
         moves=game.get_legal_moves()
         for move in moves:
             #clone=game.forecast_move(move)
             score=self.max_value(game.forecast_move(move), depth-1)
-            if score<best_score:
-                best_move=move
-                best_score=score
-        return best_score
+            if score<min_score:
+                min_score=score
+        return min_score
 
     #def max_value(self, game, player, opponent, depth):
     def max_value(self, game, depth):
@@ -284,12 +272,6 @@ class MinimaxPlayer(IsolationPlayer):
         game : isolation.Board
             An instance of the Isolation game `Board` class representing the
             passed on game state
-        
-        player : Board.active_player
-            The CPU player that is running the alpha-beta search to find the best move
-            
-        opponent : Board.inactive_player
-            Opponent trying to defeat our CPU player
         
         depth : int
             Depth is an integer representing the maximum number of plies to
@@ -310,7 +292,6 @@ class MinimaxPlayer(IsolationPlayer):
         for move in moves:
             score=self.min_value(game.forecast_move(move), depth-1)
             if score>best_score:
-                best_move=move
                 best_score=score
         return best_score
 
@@ -454,29 +435,22 @@ class AlphaBetaPlayer(IsolationPlayer):
             An instance of the Isolation game `Board` class representing the
             passed on game state
 
-        player : Board.active_player
-            The CPU player that is running the alpha-beta search to find the best move
-            
-        opponent : Board.inactive_player
-            Opponent trying to defeat our CPU player
-                    
-        depth : int
-            Depth is an integer representing the maximum number of plies to
-            search in the game tree before aborting
-
         alpha : float
             Alpha limits the lower bound of search on minimizing layers
 
         beta : float
             Beta limits the upper bound of search on maximizing layers
+                            
+        depth : int
+            Depth is an integer representing the maximum number of plies to
+            search in the game tree before aborting
+
 
         Returns
         -------
         best_score: float
-            Returns the best score from set of scores of available moves
-        
-        best_move: (int, int)
-            Board coordinates corresponding to legal move with the best score        
+            Returns the best score from set of calculated scores for available moves
+    
 
         """
         if self.time_left() < self.TIMER_THRESHOLD:
@@ -503,42 +477,33 @@ class AlphaBetaPlayer(IsolationPlayer):
             An instance of the Isolation game `Board` class representing the
             passed on game state
 
-        player : Board.active_player
-            The CPU player that is running the alpha-beta search to find the best move
-
-        opponent : Board.inactive_player
-            Opponent trying to defeat our CPU player
-
-        depth : int
-            Depth is an integer representing the maximum number of plies to
-            search in the game tree before aborting
-
         alpha : float
             Alpha limits the lower bound of search on minimizing layers
 
         beta : float
             Beta limits the upper bound of search on maximizing layers
+        
+        depth : int
+            Depth is an integer representing the maximum number of plies to
+            search in the game tree before aborting
 
         Returns
         -------
         best_score: float
-            Returns the best score from set of scores of available moves
-
-        best_move: (int, int)
-            Board coordinates corresponding to legal move with the best score        
+            Returns the best score from set of scores of available moves   
 
         """
         if self.time_left() < self.TIMER_THRESHOLD:
             raise SearchTimeout()
         if depth == 0 or len(game.get_legal_moves()) == 0:
             return self.score(game, game._inactive_player)
-        best_score = float('inf')
+        min_score = float('inf')
         legal_moves = game.get_legal_moves()
         for move in legal_moves:
             score = self.max_value(game.forecast_move(move), alpha, beta, depth-1)
-            best_score = min(best_score, score)
-            if best_score <= alpha:
-                return best_score
-            beta = min(beta, best_score)
+            min_score = min(min_score, score)
+            if min_score <= alpha:
+                return min_score
+            beta = min(beta, min_score)
 
-        return best_score
+        return min_score
