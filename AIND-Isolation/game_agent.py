@@ -223,16 +223,17 @@ class MinimaxPlayer(IsolationPlayer):
             raise SearchTimeout()
 
         # TODO: finish this function!
-        player = game.active_player
-        opponent = game.inactive_player
-        legal_moves = game.get_legal_moves(player)
+        #player = game.active_player
+        #opponent = game.inactive_player
+        #legal_moves = game.get_legal_moves(player)
+        legal_moves = game.get_legal_moves()
         if not legal_moves:
             return (-1, -1)
         best_move = legal_moves[0]
         best_score = float('-inf')
         for move in legal_moves:
-            clone = game.forecast_move(move)
-            score = self.min_value(clone, player, opponent, depth-1)
+            #clone = game.forecast_move(move)
+            score = self.min_value(game.forecast_move(move), depth-1)
             if score > best_score:
                 best_score=score
                 best_move=move
@@ -240,7 +241,8 @@ class MinimaxPlayer(IsolationPlayer):
         return best_move
         #raise NotImplementedError
 
-    def min_value(self, game, player, opponent, depth):
+    #def min_value(self, game, player, opponent, depth):
+    def min_value(self, game, depth):
         """Implement minimum value node from the minimax algorithm
 
         Parameters
@@ -249,9 +251,15 @@ class MinimaxPlayer(IsolationPlayer):
             An instance of the Isolation game `Board` class representing the
             passed on game state
 
+        player : Board.active_player
+            The CPU player that is running the alpha-beta search to find the best move
+            
+        opponent : Board.inactive_player
+            Opponent trying to defeat our CPU player
+        
         depth : int
             Depth is an integer representing the maximum number of plies to
-            search in the game tree before aborting
+            search in the game tree before aborting    
 
         Returns
         -------
@@ -261,22 +269,21 @@ class MinimaxPlayer(IsolationPlayer):
         """
         if self.time_left() < self.TIMER_THRESHOLD:
             raise SearchTimeout()
-        if game.utility(player):
-            return game.utility(player)
-        if depth<1:
-            return self.score(game, player)
+        if depth < 1 or len(game.get_legal_moves()) < 1:
+            return self.score(game, self)
         best_score=float('inf')
 
-        moves=game.get_legal_moves(opponent)
+        moves=game.get_legal_moves()
         for move in moves:
-            clone=game.forecast_move(move)
-            score=self.max_value(clone, player, opponent, depth-1)
+            #clone=game.forecast_move(move)
+            score=self.max_value(game.forecast_move(move), depth-1)
             if score<best_score:
                 best_move=move
                 best_score=score
         return best_score
 
-    def max_value(self, game, player, opponent, depth):
+    #def max_value(self, game, player, opponent, depth):
+    def max_value(self, game, depth):
         """Implement maximum value node from the minimax algorithm
 
         Parameters
@@ -284,6 +291,16 @@ class MinimaxPlayer(IsolationPlayer):
         game : isolation.Board
             An instance of the Isolation game `Board` class representing the
             passed on game state
+        
+        player : Board.active_player
+            The CPU player that is running the alpha-beta search to find the best move
+            
+        opponent : Board.inactive_player
+            Opponent trying to defeat our CPU player
+        
+        depth : int
+            Depth is an integer representing the maximum number of plies to
+            search in the game tree before aborting            
 
         Returns
         -------
@@ -293,15 +310,12 @@ class MinimaxPlayer(IsolationPlayer):
         """
         if self.time_left() < self.TIMER_THRESHOLD:
             raise SearchTimeout()
-        if game.utility(player):
-            return game.utility(player)
-        if depth<1:
-            return self.score(game, player)
+        if depth < 1 or len(game.get_legal_moves()) < 1:
+            return self.score(game, self)
         best_score=float('-inf')
-        moves=game.get_legal_moves(player)
+        moves=game.get_legal_moves()
         for move in moves:
-            clone=game.forecast_move(move)
-            score=self.min_value(clone, player, opponent, depth-1)
+            score=self.min_value(game.forecast_move(move), depth-1)
             if score>best_score:
                 best_move=move
                 best_score=score
@@ -346,8 +360,32 @@ class AlphaBetaPlayer(IsolationPlayer):
         """
         self.time_left = time_left
 
+        if self.time_left() < self.TIMER_THRESHOLD:
+            raise SearchTimeout()
+
+
         # TODO: finish this function!
-        raise NotImplementedError
+        #raise NotImplementedError
+        best_move = (-1, -1)
+
+
+
+        i=0
+
+        try:
+            # The try/except block will automatically catch the exception
+            # raised when the timer is about to expire.
+            while self.time_left() > self.TIMER_THRESHOLD:
+                i += 1
+                alpha = float("-inf")
+                beta = float("inf")
+                best_move = self.alphabeta(game, i, alpha, beta)
+
+        except SearchTimeout:
+            pass  # Handle any actions required after timeout as needed
+
+        # Return the best move from the last completed search iteration
+        return best_move
 
     def alphabeta(self, game, depth, alpha=float("-inf"), beta=float("inf")):
         """Implement depth-limited minimax search with alpha-beta pruning as
@@ -397,5 +435,132 @@ class AlphaBetaPlayer(IsolationPlayer):
         if self.time_left() < self.TIMER_THRESHOLD:
             raise SearchTimeout()
 
+        self.alpha = alpha
+        self.beta = beta
+        #self.alphabeta.alpha=1
+
         # TODO: finish this function!
-        raise NotImplementedError
+        #raise NotImplementedError
+
+        legal_moves = game.get_legal_moves()
+        best_move = (3,4)
+        #print(best_move)
+        best_score = float('-inf')
+        if not legal_moves:
+            return (-1, -1)
+        #for move in legal_moves:
+        #    score = self.min_value(game.forecast_move(move), self.alpha, self.beta, depth - 1)
+        #    if score > best_score:
+        #        best_score = score
+        #        best_move = move
+        #    self.alpha = max(self.alpha, best_score)
+
+        for move in legal_moves:
+            score = self.min_value(game.forecast_move(move), best_score, self.beta, depth-1)
+            if score > best_score:
+                best_move = move
+                best_score = score
+
+        return best_move
+
+    def max_value(self, game, alpha, beta, depth):
+        """Implement maximum value node from the alpha-beta search algorithm
+
+        Parameters
+        ----------
+        game : isolation.Board
+            An instance of the Isolation game `Board` class representing the
+            passed on game state
+
+        player : Board.active_player
+            The CPU player that is running the alpha-beta search to find the best move
+            
+        opponent : Board.inactive_player
+            Opponent trying to defeat our CPU player
+                    
+        depth : int
+            Depth is an integer representing the maximum number of plies to
+            search in the game tree before aborting
+
+        alpha : float
+            Alpha limits the lower bound of search on minimizing layers
+
+        beta : float
+            Beta limits the upper bound of search on maximizing layers
+
+        Returns
+        -------
+        best_score: float
+            Returns the best score from set of scores of available moves
+        
+        best_move: (int, int)
+            Board coordinates corresponding to legal move with the best score        
+
+        """
+        if self.time_left() < self.TIMER_THRESHOLD:
+            raise SearchTimeout()
+        #if game.utility(self):
+        #    return game.utility(self)
+        if depth == 0 or len(game.get_legal_moves()) == 0:
+            return self.score(game, self)
+        best_score = float('-inf')
+        legal_moves = game.get_legal_moves()
+        for move in legal_moves:
+            score = self.min_value(game.forecast_move(move), self.alpha, self.beta, depth-1)
+            best_score = max(best_score, score)
+            if best_score >= self.beta:
+                return best_score
+            self.alpha = max(self.alpha, best_score)
+
+        return best_score
+
+    def min_value(self, game, alpha, beta, depth):
+        """Implement minimum value node from the alpha-beta search algorithm
+
+        Parameters
+        ----------
+        game : isolation.Board
+            An instance of the Isolation game `Board` class representing the
+            passed on game state
+
+        player : Board.active_player
+            The CPU player that is running the alpha-beta search to find the best move
+
+        opponent : Board.inactive_player
+            Opponent trying to defeat our CPU player
+
+        depth : int
+            Depth is an integer representing the maximum number of plies to
+            search in the game tree before aborting
+
+        alpha : float
+            Alpha limits the lower bound of search on minimizing layers
+
+        beta : float
+            Beta limits the upper bound of search on maximizing layers
+
+        Returns
+        -------
+        best_score: float
+            Returns the best score from set of scores of available moves
+
+        best_move: (int, int)
+            Board coordinates corresponding to legal move with the best score        
+
+        """
+        if self.time_left() < self.TIMER_THRESHOLD:
+            raise SearchTimeout()
+        #if game.utility(self):
+        #    return game.utility(game.get_opponent(self))
+        if depth == 0 or len(game.get_legal_moves()) == 0:
+            return self.score(game, game._inactive_player)
+        best_score = float('inf')
+        legal_moves = game.get_legal_moves()
+        for move in legal_moves:
+            score = self.max_value(game.forecast_move(move), self.alpha, self.beta, depth-1)
+            best_score = min(best_score, score)
+            if best_score <= self.alpha:
+                return best_score
+            self.beta = min(self.beta, best_score)
+
+        return best_score
