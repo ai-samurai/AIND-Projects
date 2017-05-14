@@ -432,7 +432,7 @@ class AlphaBetaPlayer(IsolationPlayer):
         #raise NotImplementedError
 
         legal_moves = game.get_legal_moves()
-        best_move = (3,4)
+        best_move = None
         best_score = float('-inf')
         if not legal_moves:
             return (-1, -1)
