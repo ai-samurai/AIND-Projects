@@ -4,7 +4,6 @@ and include the results in your report.
 """
 
 import random
-import numpy as np
 
 
 class SearchTimeout(Exception):
@@ -45,12 +44,15 @@ def custom_score(game, player):
     if game.is_winner(player):
         return float("inf")
 
-    w, h = game.width / 2., game.height / 2.
-    y, x = game.get_player_location(player)
-
     own_moves = len(game.get_legal_moves(player))
+
+    if game.move_count < 10:
+        w, h = game.width / 2., game.height / 2.
+        y, x = game.get_player_location(player)
+        a, b = game.get_player_location(game.get_opponent(player))
+        return float((a - y)**2 + (b - x)**2)/float((h - y)**2 + (w - x)**2)
     opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
-    return float(1/((h - y) ** 2 + (w - x) ** 2)) + 3*float(own_moves/max(opp_moves,1))
+    return float(own_moves/max(opp_moves, 1))
 
 
 def custom_score_2(game, player):
@@ -84,9 +86,10 @@ def custom_score_2(game, player):
     if game.is_winner(player):
         return float("inf")
 
-    own_moves = len(game.get_legal_moves(player))
-    opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
-    return float(own_moves / max(opp_moves,1))
+    w, h = game.width / 2., game.height / 2.
+    y, x = game.get_player_location(player)
+    a, b = game.get_player_location(game.get_opponent(player))
+    return float((a - y)**2 + (b - x)**2)/float((h - y)**2 + (w - x)**2)
 
 
 def custom_score_3(game, player):
@@ -119,10 +122,11 @@ def custom_score_3(game, player):
     if game.is_winner(player):
         return float("inf")
 
-    w, h = game.width / 2., game.height / 2.
     y, x = game.get_player_location(player)
-
-    return float(1/((h - y) ** 2 + (w - x) ** 2))
+    a, b = game.get_player_location(game.get_opponent(player))
+    avg_distance = sum([((x-i)**2+(y-j)**2) for (i,j) in game.get_blank_spaces()])/len(game.get_blank_spaces())
+    opp_avg_distance = sum([((a-i)**2+(b-j)**2) for (i,j) in game.get_blank_spaces()])/len(game.get_blank_spaces())
+    return opp_avg_distance/avg_distance
 
 
 class IsolationPlayer:
