@@ -29,7 +29,8 @@ class ModelSelector(object):
         self.verbose = verbose
 
     def select(self):
-        raise NotImplementedError
+        return None
+        #raise NotImplementedError
 
     def base_model(self, num_states):
         # with warnings.catch_warnings():
@@ -68,6 +69,16 @@ class SelectorBIC(ModelSelector):
     Bayesian information criteria: BIC = -2 * logL + p * logN
     """
 
+    def score(self, num_states):
+        model = self.base_model(num_states)
+        logL = model.score(self.X, self.lengths)
+        logN = np.log(len(self.X))
+        #print(len(self.X[0]))
+        # Ref - https://ai-nd.slack.com/files/ylu/F4S90AJFR/number_of_parameters_in_bic.txt
+        p = (num_states**2) + 2*(len(self.X[0])*(num_states))-1
+        #print((-2*(logL) + p*logN), num_states)
+        return (-2*(logL) + p*logN), model
+
     def select(self):
         """ select the best model for self.this_word based on
         BIC score for n between self.min_n_components and self.max_n_components
@@ -77,7 +88,20 @@ class SelectorBIC(ModelSelector):
         warnings.filterwarnings("ignore", category=DeprecationWarning)
 
         # TODO implement model selection based on BIC scores
-        raise NotImplementedError
+        # Ref - https://discussions.udacity.com/t/hmmlearn-valueerror-rows-of-transmat--must-sum-to-1-0/229995/5
+        try:
+            best_score = float("inf")
+            best_model = None
+            for num_states in range(self.min_n_components, self.max_n_components+1):
+                score, model = self.score(num_states)
+                if score < best_score:
+                    #print('Best_score: '+ str(score))
+                    best_score = score
+                    best_model = model
+            return best_model
+        except:
+            print('error found')
+            return self.base_model(self.n_constant)
 
 
 class SelectorDIC(ModelSelector):
@@ -89,20 +113,91 @@ class SelectorDIC(ModelSelector):
     DIC = log(P(X(i)) - 1/(M-1)SUM(log(P(X(all but i))
     '''
 
+    def dic_score(self, num_states, mean):
+        model = self.base_model(num_states)
+        #print(model.score(self.X, self.lengths) - mean)
+        return model.score(self.X, self.lengths) - mean
+
+
     def select(self):
         warnings.filterwarnings("ignore", category=DeprecationWarning)
+        try:
+            mean_score_array = []
+            best_score = float("inf")
+            best_model = None
+
+            for num_states in range(self.min_n_components, self.max_n_components):
+
+                model = self.base_model(num_states)
+
+                for word, (X, lengths) in self.hwords.items():
+                    #print('test')
+                    #(X2, lengths2) = combine_sequences(X, lengths)
+                    #print('test2')
+                    if word != self.this_word:
+                        mean_score_array.append(model.score(X, lengths))
+
+                mean=np.mean(mean_score_array)
+
+                score = self.dic_score(num_states, mean)
+
+                if score < best_score:
+                    #print('Best Score: ' + str(score))
+                    best_score = score
+                    best_model = self.base_model(num_states)
+            return best_model
+        except:
+            print('error found')
+            return self.base_model(self.n_constant)
+
+
+
 
         # TODO implement model selection based on DIC scores
-        raise NotImplementedError
+        #raise NotImplementedError
 
 
 class SelectorCV(ModelSelector):
     ''' select best model based on average log Likelihood of cross-validation folds
 
     '''
+    def cv_score(self, num_states):
+
+        model = self.base_model(num_states)
+
+        scores = []
+        word_samples = len(self.sequences)
+        if word_samples > 10:
+            n = (int(0.2*word_samples))
+        else:
+            n = 2
+        #print(word_samples, n)
+        split_method = KFold(n_splits=n)
+
+        for cv_train_idx, cv_test_idx in split_method.split(self.sequences):
+            self.X, self.lengths = combine_sequences(cv_train_idx, self.sequences)
+            (X_test,L_test) = combine_sequences(cv_test_idx, self.sequences)
+            scores.append(model.score(X_test,L_test))
+        #print(np.mean(scores), num_states)
+        return np.mean(scores), model
 
     def select(self):
         warnings.filterwarnings("ignore", category=DeprecationWarning)
 
         # TODO implement model selection using CV
-        raise NotImplementedError
+        best_score = float("-inf")
+        best_model = None
+
+        try:
+
+            for num_states in range(self.min_n_components, self.max_n_components+1):
+                score, model = self.cv_score(num_states)
+
+                if score > best_score:
+                    #print('Best Score: '+str(score))
+                    best_score = score
+                    best_model = model
+
+            return best_model
+        except:
+            return self.base_model(self.n_constant)

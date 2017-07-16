@@ -20,6 +20,8 @@ def recognize(models: dict, test_set: SinglesData):
     warnings.filterwarnings("ignore", category=DeprecationWarning)
     probabilities = []
     guesses = []
+
+    '''Oh and to help anyone who is facing a really dumb issue like me, your 'guesses' list in my_recognizer.py should be those words with MAX logL, not min (edited). Ref - https://ai-nd.slack.com/messages/C4GQUB39T/search/DIC/'''
     # TODO implement the recognizer
     # return probabilities, guesses
     raise NotImplementedError
