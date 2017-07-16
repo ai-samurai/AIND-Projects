@@ -23,5 +23,24 @@ def recognize(models: dict, test_set: SinglesData):
 
     '''Oh and to help anyone who is facing a really dumb issue like me, your 'guesses' list in my_recognizer.py should be those words with MAX logL, not min (edited). Ref - https://ai-nd.slack.com/messages/C4GQUB39T/search/DIC/'''
     # TODO implement the recognizer
-    # return probabilities, guesses
-    raise NotImplementedError
+
+    for (X, lengths) in test_set.get_all_Xlengths().values():
+        word_probabilities ={}
+        best_score = float('-inf')
+        best_guess = None
+
+        for train_word, model in models.items():
+            try:
+                score = model.score(X, lengths)
+                word_probabilities[train_word] = score
+                if score > best_score:
+                    best_score, best_guess = score, train_word
+            except:
+                word_probabilities[train_word] = float('-inf')
+        guesses.append(best_guess)
+        probabilities.append(word_probabilities)
+
+    return probabilities, guesses
+
+
+    #raise NotImplementedError
