@@ -109,39 +109,30 @@ class SelectorDIC(ModelSelector):
     DIC = log(P(X(i)) - 1/(M-1)SUM(log(P(X(all but i))
     '''
 
-    def dic_score(self, num_states, mean):
-        model = self.base_model(num_states)
-        return model.score(self.X, self.lengths) - mean
+    #def dic_score(self, num_states, mean):
+    #    model = self.base_model(num_states)
+    #    return model.score(self.X, self.lengths) - mean
 
 
     def select(self):
         warnings.filterwarnings("ignore", category=DeprecationWarning)
         try:
-
-            best_score = float("inf")
+            best_score = float("-inf")
             best_model = None
-
             for num_states in range(self.min_n_components, self.max_n_components):
                 mean_score_array = []
                 model = self.base_model(num_states)
-
                 for word, (X, lengths) in self.hwords.items():
                     if word != self.this_word:
                         mean_score_array.append(model.score(X, lengths))
-
                 mean=np.mean(mean_score_array)
-
-                score = self.dic_score(num_states, mean)
-
-                if score < best_score:
+                score = model.score(self.X, self.lengths) - mean
+                if score > best_score:
                     best_score = score
                     best_model = self.base_model(num_states)
             return best_model
         except:
             return self.base_model(self.n_constant)
-
-
-
 
         # TODO implement model selection based on DIC scores
         #raise NotImplementedError
@@ -151,18 +142,17 @@ class SelectorCV(ModelSelector):
     ''' select best model based on average log Likelihood of cross-validation folds
 
     '''
-    def cv_score(self, num_states):
+    def score(self, num_states):
 
         model = self.base_model(num_states)
-
         scores = []
+        # Linking n_splits to number of word samples, improved WER
         word_samples = len(self.sequences)
         if word_samples > 10:
             n = (int(0.2*word_samples))
         else:
             n = 2
         split_method = KFold(n_splits=n)
-
         for cv_train_idx, cv_test_idx in split_method.split(self.sequences):
             self.X, self.lengths = combine_sequences(cv_train_idx, self.sequences)
             (X_test,L_test) = combine_sequences(cv_test_idx, self.sequences)
@@ -177,14 +167,11 @@ class SelectorCV(ModelSelector):
         best_model = None
 
         try:
-
             for num_states in range(self.min_n_components, self.max_n_components+1):
-                score, model = self.cv_score(num_states)
-
+                score, model = self.score(num_states)
                 if score > best_score:
                     best_score = score
                     best_model = model
-
             return best_model
         except:
             return self.base_model(self.n_constant)
