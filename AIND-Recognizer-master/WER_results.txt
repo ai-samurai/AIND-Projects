@@ -4,9 +4,16 @@
 |   Polar     |     BIC    |  0.545  |
 |   Ground    |     BIC    |  0.545  |
 |   Ground    |     DIC    |  0.567  |
-|   Ground    |     CV     |  0.579  |
-|   Polar     |     CV     |  0.579  |
+
+
+<br><br><i><center>Other combinations tried:</center></i>
+
+| Feature Set |  Selector  |   WER   |
+|:------------|:----------|:-------:|
+|   Ground    |     BIC    |  0.545  |
+|   Ground    |     CV     |  0.601  |
+|   Polar     |     CV     |  0.617  |
 |   Delta     |     BIC    |  0.624  |
 |   Ground    |  Constant  |  0.669  |
-|   Norm      |     CV     |  0.680  |
-|   Custom    |	    CV	   |  0.736  |
+|   Custom    |	    DIC	   |  0.730  |
+

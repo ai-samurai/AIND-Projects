@@ -129,7 +129,7 @@ class SelectorDIC(ModelSelector):
                 score = model.score(self.X, self.lengths) - mean
                 if score > best_score:
                     best_score = score
-                    best_model = self.base_model(num_states)
+                    best_model = model
             return best_model
         except:
             return self.base_model(self.n_constant)
@@ -144,34 +144,29 @@ class SelectorCV(ModelSelector):
     '''
     def score(self, num_states):
 
-        model = self.base_model(num_states)
         scores = []
-        # Linking n_splits to number of word samples, improved WER
-        word_samples = len(self.sequences)
-        if word_samples > 10:
-            n = (int(0.2*word_samples))
-        else:
-            n = 2
-        split_method = KFold(n_splits=n)
+        split_method = KFold(n_splits=2)
+
         for cv_train_idx, cv_test_idx in split_method.split(self.sequences):
-            self.X, self.lengths = combine_sequences(cv_train_idx, self.sequences)
+            X_train, l_train = combine_sequences(cv_train_idx, self.sequences)
+            model=GaussianHMM(n_components=num_states, covariance_type="diag", n_iter=1000, random_state=self.random_state, verbose=False).fit(X_train, l_train)
             (X_test,L_test) = combine_sequences(cv_test_idx, self.sequences)
             scores.append(model.score(X_test,L_test))
-        return np.mean(scores), model
+        return np.mean(scores)
 
     def select(self):
         warnings.filterwarnings("ignore", category=DeprecationWarning)
 
         # TODO implement model selection using CV
         best_score = float("-inf")
-        best_model = None
+        best_states = 3
 
         try:
             for num_states in range(self.min_n_components, self.max_n_components+1):
-                score, model = self.score(num_states)
+                score = self.score(num_states)
                 if score > best_score:
                     best_score = score
-                    best_model = model
-            return best_model
+                    best_states = num_states
+            return self.base_model(best_states)
         except:
             return self.base_model(self.n_constant)
